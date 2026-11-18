@@ -1,4 +1,8 @@
-const socket = io();
+function renderFinish(players) {
+  showScreen("finishScreen");
+  const sorted = [...players].sort((a,b) => b.score-a.score);
+  $("finalRanking").innerHTML = sorted.map((p,i) => `<div class="rank-row"><span class="rank-num">${["🥇","🥈","🥉"][i] || (i+1)}</span><span class="rank-name">${escapeHtml(p.name)}</span><span class="rank-score">${p.score} 分</span></div>`).join("");
+}const socket = io();
 const $ = id => document.getElementById(id);
 const screens = ["homeScreen", "lobbyScreen", "gameScreen", "finishScreen"];
 let roomCode = null, isHost = false, roomState = null, hasAnswered = false, toastTimer = null;
@@ -81,51 +85,8 @@ function revealAnswer(correctIndex, message) {
 function renderFinish(players) {
   showScreen("finishScreen");
   const sorted = [...players].sort((a,b) => b.score-a.score);
+
   $("finalRanking").innerHTML = sorted.map((p,i) => `<div class="rank-row"><span class="rank-num">${["🥇","🥈","🥉"][i] || (i+1)}</span><span class="rank-name">${escapeHtml(p.name)}</span><span class="rank-score">${p.score} 分</span></div>`).join("");
+
+  $("restartButton").style.display = isHost ? "block" : "none";
 }
-async function updateSettings() {
-  if (!roomCode || !isHost) return;
-  const result = await request("updateSettings", {
-    code: roomCode, category: $("categorySelect").value,
-    difficulty: $("difficultySelect").value, questionCount: Number($("questionCount").value)
-  });
-  if (!result?.ok) toast(result?.message || "設定更新失敗");
-}
-$("createButton").addEventListener("click", createRoom);
-$("joinButton").addEventListener("click", joinRoom);
-$("roomCodeInput").addEventListener("input", e => e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,5));
-["categorySelect","difficultySelect","questionCount"].forEach(id => $(id).addEventListener("change", updateSettings));
-$("startButton").addEventListener("click", async () => {
-  const result = await request("startGame", { code: roomCode });
-  if (!result?.ok) lobbyMessage(result?.message || "無法開始遊戲。");
-});
-$("leaveLobbyButton").addEventListener("click", () => {
-  if (roomCode) socket.emit("leaveRoom", { code: roomCode });
-  roomCode = null; isHost = false; roomState = null; showScreen("homeScreen");
-});
-$("copyCodeButton").addEventListener("click", async () => {
-  try { await navigator.clipboard.writeText(roomCode || ""); toast("房號已複製！"); }
-  catch { toast(`房號：${roomCode}`); }
-});
-$("answerGrid").addEventListener("click", async e => {
-  const btn = e.target.closest("button[data-answer]");
-  if (!btn || hasAnswered || !roomCode) return;
-  hasAnswered = true;
-  const answer = Number(btn.dataset.answer);
-  $("answerGrid").querySelectorAll("button").forEach(b => b.disabled = true);
-  btn.classList.add("selected");
-  $("answerFeedback").textContent = "答案已送出，等待其他玩家…";
-  const result = await request("submitAnswer", { code: roomCode, answer });
-  if (!result?.ok) { $("answerFeedback").textContent = result?.message || "送出失敗"; return; }
-  $("answerFeedback").textContent = result.correct ? `答對了！目前 ${result.score} 分` : "再接再厲！";
-});
-$("backHomeButton").addEventListener("click", () => {
-  if (roomCode) socket.emit("leaveRoom", { code: roomCode });
-  roomCode = null; isHost = false; roomState = null; hasAnswered = false;
-  $("nickname").value = ""; $("roomCodeInput").value = ""; homeMessage(""); showScreen("homeScreen");
-});
-socket.on("roomState", renderRoom);
-socket.on("tick", seconds => $("timerValue").textContent = seconds);
-socket.on("connect", () => console.log("AniQuiz connected:", socket.id));
-socket.on("connect_error", () => homeMessage("連線失敗，請重新整理頁面。"));
-socket.on("disconnect", () => toast("連線中斷，請重新整理後再加入房間。"));
