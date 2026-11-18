@@ -2,7 +2,9 @@ function renderFinish(players) {
   showScreen("finishScreen");
   const sorted = [...players].sort((a,b) => b.score-a.score);
   $("finalRanking").innerHTML = sorted.map((p,i) => `<div class="rank-row"><span class="rank-num">${["🥇","🥈","🥉"][i] || (i+1)}</span><span class="rank-name">${escapeHtml(p.name)}</span><span class="rank-score">${p.score} 分</span></div>`).join("");
-}const socket = io();
+}
+
+const socket = io();
 const $ = id => document.getElementById(id);
 const screens = ["homeScreen", "lobbyScreen", "gameScreen", "finishScreen"];
 let roomCode = null, isHost = false, roomState = null, hasAnswered = false, toastTimer = null;
