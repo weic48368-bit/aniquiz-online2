@@ -12,7 +12,17 @@ const rooms = new Map();
 const MAX_PLAYERS = 12;
 const QUESTION_SECONDS = 20;
 
-app.use(express.static(path.join(__dirname, "public")));
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+app.get("/style.css", (req, res) => {
+  res.sendFile(path.join(__dirname, "style.css"));
+});
+
+app.get("/script.js", (req, res) => {
+  res.sendFile(path.join(__dirname, "script.js"));
+});
 app.get("/health", (_req, res) => res.json({ ok: true, name: "AniQuiz 2.0" }));
 
 function makeCode() {
