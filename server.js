@@ -148,7 +148,26 @@ io.on("connection", socket => {
     callback({ ok: true });
     emitRoom(room);
   });
+  socket.on("restartGame", ({ code } = {}, callback = () => {}) => {
+    const room = rooms.get(String(code || "").toUpperCase());
 
+    if (!room || room.hostId !== socket.id || room.status !== "finished") {
+      return callback({ ok: false, message: "目前無法重新開始遊戲。" });
+    }
+
+    room.questions = chooseQuestions(room.settings);
+
+    room.players.forEach(p => {
+      p.score = 0;
+      p.answered = false;
+      p.lastAnswer = null;
+    });
+
+    room.questionIndex = -1;
+    room.lastResult = null;
+    callback({ ok: true });
+    nextQuestion(room);
+  });
   socket.on("startGame", ({ code } = {}, callback = () => {}) => {
     const room = rooms.get(String(code || "").toUpperCase());
     if (!room || room.hostId !== socket.id || room.status !== "lobby")
