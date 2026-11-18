@@ -92,3 +92,8 @@ $("restartButton").addEventListener("click", async () => {
   const result = await request("restartGame", { code: roomCode });
   if (!result?.ok) toast(result?.message || "重新開始失敗");
 });
+// 建立房間按鈕
+$("createButton").addEventListener("click", createRoom);
+
+// 加入房間按鈕
+$("joinButton").addEventListener("click", joinRoom);
