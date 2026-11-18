@@ -92,3 +92,7 @@ function renderFinish(players) {
 
   $("restartButton").style.display = isHost ? "block" : "none";
 }
+$("restartButton").addEventListener("click", async () => {
+  const result = await request("restartGame", { code: roomCode });
+  if (!result?.ok) toast(result?.message || "重新開始失敗");
+});
